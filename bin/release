@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Usage: bin/release <build-dir>
+# Apps are expected to ship their own Procfile; these are fallbacks only.
+
+cat <<EOF
+---
+default_process_types:
+  web: bundle exec rails server -p \$PORT -e \$RAILS_ENV -b 0.0.0.0
+EOF

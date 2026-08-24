@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Usage: bin/compile <build-dir> <cache-dir> <env-dir>
+#
+# Builds a Trek host app (Rails + esbuild + Yarn berry) in a single buildpack:
+# APT packages, Ruby (via rv), Bundler, Node.js + Corepack/Yarn (build-only),
+# assets:precompile, then slug slimming.
+set -euo pipefail
+
+BUILD_DIR="$(cd "$1" && pwd)"
+mkdir -p "$2"
+CACHE_DIR="$(cd "$2" && pwd)"
+ENV_DIR="${3:-}"
+BP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Pinned tool versions. Bump deliberately; everything else is pinned by the
+# app itself (.ruby-version, .node-version / .tool-versions, packageManager).
+RV_VERSION="0.6.0"
+# Fallback when the app pins no Node version — mirrors the Scalingo ruby
+# buildpack default so unpinned apps keep building, with a loud warning.
+DEFAULT_NODE_VERSION="24.13.0"
+
+export STACK="${STACK:-scalingo-22}"
+
+for lib in "$BP_DIR"/lib/*.sh; do
+  # shellcheck source=/dev/null
+  source "$lib"
+done
+
+export_env_dir
+
+apt_install
+
+rv_install
+ruby_install
+bundler_install
+
+node_install
+yarn_install
+
+assets_precompile
+
+slug_prune
+write_profile_d
+write_export_file
+
+topic "Build succeeded"

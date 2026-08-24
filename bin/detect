@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Usage: bin/detect <build-dir>
+# Detects a Trek host app: a Rails app with a Gemfile.lock and a package.json.
+
+BUILD_DIR="$1"
+
+if [ -f "$BUILD_DIR/Gemfile.lock" ]; then
+  echo "Trek"
+  exit 0
+fi
+
+exit 1
