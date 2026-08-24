@@ -4,7 +4,7 @@ A single, fast [Scalingo buildpack](https://doc.scalingo.com/platform/deployment
 
 - installs APT packages from `Aptfile`, skipping `apt-get update` and package resolution entirely when the `Aptfile` is unchanged
 - installs Ruby with [rv](https://rv.dev) — precompiled, in seconds — using the version pinned in `.ruby-version` (or `.tool-versions` / `Gemfile.lock`)
-- installs Node.js pinned by `.node-version` (or `.tool-versions`), and the exact Yarn release pinned by `package.json`'s `packageManager` field via Corepack — no more unpinned defaults
+- installs Node.js pinned by `.node-version` (or `.tool-versions`), and the exact Yarn release pinned by `package.json`'s `packageManager` field, fetched directly from repo.yarnpkg.com — no more unpinned defaults
 - runs `yarn install` exactly once, with a persistent cache, before `assets:precompile`
 - slims the slug after the build: `node_modules`, Yarn machinery, and caches are dropped (Node.js never even enters the slug), roughly halving the image size of a typical Trek app — which speeds up deploys, restarts and scaling
 
@@ -40,7 +40,7 @@ bin/release    # fallback process types (apps normally ship a Procfile)
 lib/*.sh       # one module per concern: apt, ruby (rv), bundler, node/yarn, assets, slug
 ```
 
-Build cache layout (under Scalingo's per-app cache dir): `apt/` (deb archives + Aptfile fingerprint), `rv/`, `xdg-cache/` (rv's Ruby tarballs), `vendor-bundle` (gems, keyed by Ruby version), `node/`, `corepack/`, `yarn-global/` (berry package cache).
+Build cache layout (under Scalingo's per-app cache dir): `apt/` (deb archives + Aptfile fingerprint), `rv/`, `xdg-cache/` (rv's Ruby tarballs), `vendor-bundle` (gems, keyed by Ruby version), `node/`, `yarn/` (pinned Yarn CLI), `yarn-global/` (berry package cache).
 
 ## Notes
 

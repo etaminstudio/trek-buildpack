@@ -2,8 +2,10 @@
 # never enters the slug (Rails needs no Node at runtime once assets are built);
 # set TREK_BUILDPACK_RUNTIME_NODE=1 to ship it in the slug anyway.
 #
-# The Node version is read from .node-version, then .tool-versions; Yarn is
-# whatever the app's package.json `packageManager` field pins, via Corepack.
+# The Node version is read from .node-version, then .tool-versions. Yarn is the
+# exact release pinned by package.json's `packageManager` field, downloaded
+# straight from repo.yarnpkg.com (Corepack is gone from Node >= 25 downloads,
+# and Yarn berry is a single yarn.js file anyway).
 
 node_version() {
   local version=""
@@ -49,11 +51,7 @@ node_install() {
 
   export PATH="$node_dir/bin:$PATH"
 
-  # Corepack provides the Yarn version pinned by package.json `packageManager`,
-  # cached between builds.
-  export COREPACK_HOME="$CACHE_DIR/corepack"
-  export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-  corepack enable --install-directory "$node_dir/bin" 2>&1 | indent
+  yarn_install_cli
 
   info "Using node $(node --version), yarn $(cd "$BUILD_DIR" && yarn --version)"
 
@@ -62,6 +60,37 @@ node_install() {
     mkdir -p "$BUILD_DIR/vendor"
     cp -a "$node_dir" "$BUILD_DIR/vendor/node"
   fi
+}
+
+# Installs the Yarn CLI pinned by `packageManager` (e.g. "yarn@4.18.0") and
+# puts a `yarn` shim on the build PATH.
+yarn_install_cli() {
+  local pin version
+  pin="$(sed -n 's/.*"packageManager"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$BUILD_DIR/package.json" | head -1)"
+  case "$pin" in
+    yarn@*) version="${pin#yarn@}" ;;
+    "") fail "No \"packageManager\" field in package.json — pin one, e.g. \"yarn@4.18.0\"" ;;
+    *) fail "Unsupported package manager \"$pin\" (only yarn is supported)" ;;
+  esac
+
+  local yarn_js="$CACHE_DIR/yarn/$version/yarn.js"
+  if [ ! -f "$yarn_js" ]; then
+    info "Downloading Yarn $version"
+    rm -rf "$CACHE_DIR/yarn"
+    mkdir -p "$CACHE_DIR/yarn/$version"
+    curl --fail --retry 3 --location --silent --show-error \
+      -o "$yarn_js" "https://repo.yarnpkg.com/$version/packages/yarnpkg-cli/bin/yarn.js"
+  fi
+
+  local shim_dir="$CACHE_DIR/shims"
+  rm -rf "$shim_dir"
+  mkdir -p "$shim_dir"
+  cat > "$shim_dir/yarn" <<EOF
+#!/usr/bin/env bash
+exec node "$yarn_js" "\$@"
+EOF
+  chmod +x "$shim_dir/yarn"
+  export PATH="$shim_dir:$PATH"
 }
 
 yarn_install() {
