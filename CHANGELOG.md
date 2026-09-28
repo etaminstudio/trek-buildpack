@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Force the Bundler install past the default gem: `bundler` ships with Ruby, so `bin/bundle` already exists and RubyGems refused to overwrite it — `"bundle" from bundler conflicts with vendor/ruby/*/bin/bundle` — which failed the build outright.
+
+### Documentation
+
+- Give the pinned archive URL in the README, and say why `#ref` does not work: Scalingo reads it as a branch, so a tag returns 404. Also note that a `.buildpacks` file takes precedence over `BUILDPACK_URL`.
+
 ## [0.1.1] - 2026-09-29
 
 ### Fixed
