@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-29
+
 ### Fixed
 
 - Install the Bundler version named by `BUNDLED WITH` in `Gemfile.lock`. RubyGems activates that version at boot, so an app whose lockfile asks for a Bundler newer than the one shipped with Ruby built fine and then died on start with `Could not find 'bundler' (~> 2.7)`.
