@@ -30,8 +30,11 @@ bundler_ensure_version() {
   fi
 
   info "Installing bundler $wanted (Gemfile.lock)"
+  # --force: bundler is a default gem, so bin/bundle already exists and
+  # RubyGems refuses to overwrite it otherwise:
+  #   "bundle" from bundler conflicts with vendor/ruby/*/bin/bundle
   GEM_HOME="$(ruby -e 'print Gem.default_dir')" \
-    gem install bundler --version "$wanted" --no-document 2>&1 | indent
+    gem install bundler --version "$wanted" --force --no-document 2>&1 | indent
 }
 
 bundler_install() {
