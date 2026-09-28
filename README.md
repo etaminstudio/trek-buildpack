@@ -15,14 +15,14 @@ Point the app at this buildpack, replacing any existing `.buildpacks` — a
 place means this buildpack never runs:
 
 ```
-BUILDPACK_URL=https://github.com/etaminstudio/trek-buildpack/archive/refs/tags/v0.1.1.tar.gz
+BUILDPACK_URL=https://github.com/etaminstudio/trek-buildpack/archive/refs/tags/v0.1.2.tar.gz
 ```
 
 Pin a release rather than tracking the default branch: a build path that
 changes between two deploys is only noticed when a deploy breaks.
 
 **Use the archive form.** Scalingo reads `#ref` as a branch, not a tag, so
-`…/trek-buildpack#v0.1.1` fails the download outright:
+`…/trek-buildpack#v0.1.2` fails the download outright:
 
 ```
 !  fail to download and extract the custom buildpack: Invalid status code: 404 Not Found

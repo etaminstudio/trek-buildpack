@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-09-29
+
 ### Fixed
 
 - Force the Bundler install past the default gem: `bundler` ships with Ruby, so `bin/bundle` already exists and RubyGems refused to overwrite it — `"bundle" from bundler conflicts with vendor/ruby/*/bin/bundle` — which failed the build outright.
