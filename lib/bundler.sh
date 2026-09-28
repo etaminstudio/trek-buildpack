@@ -1,8 +1,43 @@
 # Gem installation with a persistent vendor/bundle cache, invalidated when the
 # Ruby version changes (native extensions are linked against a specific Ruby).
 
+# The version named by `BUNDLED WITH` in Gemfile.lock.
+bundler_version_from_lockfile() {
+  local lock="$BUILD_DIR/Gemfile.lock"
+  [ -f "$lock" ] || return 0
+  awk '/^BUNDLED WITH$/ { getline; gsub(/[[:space:]]/, ""); print; exit }' "$lock"
+}
+
+# RubyGems activates the bundler named in the lockfile, so a slug carrying only
+# the one shipped with Ruby dies at boot:
+#
+#   Activating bundler (~> 2.7) failed:
+#   Could not find 'bundler' (~> 2.7) - did find: [bundler-2.6.9]
+#
+# The build itself survives the mismatch, which is what makes it worth
+# installing here rather than trusting `bundle install` to have proved it.
+#
+# Installed into Ruby's own gem directory: that is on the runtime GEM_PATH,
+# where a user install under HOME would not survive the move to /app.
+bundler_ensure_version() {
+  local wanted
+  wanted="$(bundler_version_from_lockfile)"
+  [ -n "$wanted" ] || return 0
+
+  if gem list --installed --exact --version "$wanted" bundler >/dev/null 2>&1; then
+    info "Bundler $wanted already present"
+    return 0
+  fi
+
+  info "Installing bundler $wanted (Gemfile.lock)"
+  GEM_HOME="$(ruby -e 'print Gem.default_dir')" \
+    gem install bundler --version "$wanted" --no-document 2>&1 | indent
+}
+
 bundler_install() {
   topic "Installing gems"
+
+  bundler_ensure_version
 
   local ruby_signature cached_signature
   ruby_signature="$(ruby -v)"
