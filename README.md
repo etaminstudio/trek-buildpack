@@ -40,11 +40,11 @@ echo "24.13.0" > .node-version
 | --- | --- |
 | `TREK_BUILDPACK_RUNTIME_NODE=1` | Ship Node.js in the slug (only needed if the app runs JS at runtime, e.g. execjs) |
 | `TREK_BUILDPACK_PRUNE_SOURCEMAPS=1` | Also remove `.map` files from the compiled assets |
-| `TREK_BUILDPACK_JEMALLOC=0` | Don't preload jemalloc, even when the `Aptfile` installs it |
+| `TREK_BUILDPACK_JEMALLOC=0` | Don't preload jemalloc, even when the `Aptfile` lists it |
 
 The runtime environment defaults `RAILS_ENV`/`RACK_ENV` to `production` and enables `RAILS_LOG_TO_STDOUT` and `RAILS_SERVE_STATIC_FILES`; set them explicitly in the app's environment to override.
 
-When the `Aptfile` installs `libjemalloc2`, as Trek's does, the runtime environment preloads it (`LD_PRELOAD`), since rv's Rubies aren't built with jemalloc ([rv#47](https://github.com/spinel-coop/rv/issues/47): preloading it is the recommended way), and defaults `MALLOC_CONF` to `dirty_decay_ms:1000,muzzy_decay_ms:1000`, so freed memory goes back to the system after a second. An app that sets `LD_PRELOAD` to jemalloc itself keeps its own; `MALLOC_CONF` set in the app's environment overrides the default.
+When the `Aptfile` lists `libjemalloc2`, as Trek's does, the runtime environment preloads it (`LD_PRELOAD`), from the slug when apt installed it, or from the stack's image, which ships it from `scalingo-26` on (apt then has nothing to install). It does so since rv's Rubies aren't built with jemalloc ([rv#47](https://github.com/spinel-coop/rv/issues/47): preloading it is the recommended way), and defaults `MALLOC_CONF` to `dirty_decay_ms:1000,muzzy_decay_ms:1000`, so freed memory goes back to the system after a second. An app that sets `LD_PRELOAD` to jemalloc itself keeps its own; `MALLOC_CONF` set in the app's environment overrides the default.
 
 jemalloc's upstream development [has ended](https://jasone.github.io/2025/06/12/jemalloc-postmortem/), though the library is stable and still packaged by Ubuntu. To run on glibc's allocator instead, set `TREK_BUILDPACK_JEMALLOC=0` (or drop `libjemalloc2` from the `Aptfile`), and consider `MALLOC_ARENA_MAX=2`, which limits glibc's per-thread memory pools.
 
