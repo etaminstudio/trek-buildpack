@@ -36,6 +36,19 @@ export RAILS_ENV="${RAILS_ENV:-production}"
 export RACK_ENV="${RACK_ENV:-$RAILS_ENV}"
 export RAILS_LOG_TO_STDOUT="${RAILS_LOG_TO_STDOUT:-enabled}"
 export RAILS_SERVE_STATIC_FILES="${RAILS_SERVE_STATIC_FILES:-enabled}"
+
+# jemalloc, when the Aptfile installs it (libjemalloc2): rv's Rubies aren't built with it, so it
+# only takes over malloc when preloaded. Unless the app preloads it already, or opts out.
+trek_jemalloc="$HOME/.apt/usr/lib/x86_64-linux-gnu/libjemalloc.so.2"
+if [ -f "$trek_jemalloc" ] && [ "${TREK_BUILDPACK_JEMALLOC:-1}" != "0" ]; then
+  case "$LD_PRELOAD" in
+    *libjemalloc*) ;;
+    *) export LD_PRELOAD="$trek_jemalloc${LD_PRELOAD:+ $LD_PRELOAD}" ;;
+  esac
+  # Give freed memory back to the system after a second, rather than ten
+  export MALLOC_CONF="${MALLOC_CONF:-dirty_decay_ms:1000,muzzy_decay_ms:1000}"
+fi
+unset trek_jemalloc
 EOF
 }
 
