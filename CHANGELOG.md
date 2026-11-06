@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- jemalloc wasn't preloaded on the `scalingo-26` stack: its image already ships `libjemalloc2`, so apt installs nothing into the slug, where 0.1.3 only looked. The runtime environment now also finds the stack's library (`/usr/lib/x86_64-linux-gnu/libjemalloc.so.2`), and preloads it whenever the `Aptfile` lists `libjemalloc2`.
+
 ## [0.1.3] - 2026-11-06
 
 ### Added
