@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-11-06
+
 ### Added
 
 - Preload jemalloc when the `Aptfile` installs it (`libjemalloc2`, in Trek's `Aptfile`). rv's Rubies aren't built with jemalloc, so until now the library was installed but never used: apps ran on glibc's allocator, whose memory grows with fragmentation. The runtime environment now sets `LD_PRELOAD` to it, and `MALLOC_CONF` to `dirty_decay_ms:1000,muzzy_decay_ms:1000` unless the app sets its own. `TREK_BUILDPACK_JEMALLOC=0` opts out.
