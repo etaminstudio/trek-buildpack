@@ -49,8 +49,10 @@ apt_install() {
   info "$(ls "$apt_cache"/archives/*.deb 2>/dev/null | wc -l | tr -d ' ') packages installed"
 
   # Build-time environment so bundle install / native extensions find them.
+  local library_subdirs
+  library_subdirs="$(apt_library_subdirs | sed "s|^|$BUILD_DIR/.apt/|" | paste -sd: -)"
   export PATH="$BUILD_DIR/.apt/usr/bin:$PATH"
-  export LD_LIBRARY_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu:$BUILD_DIR/.apt/usr/lib:${LD_LIBRARY_PATH:-}"
+  export LD_LIBRARY_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu:$BUILD_DIR/.apt/usr/lib${library_subdirs:+:$library_subdirs}:${LD_LIBRARY_PATH:-}"
   export LIBRARY_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu:$BUILD_DIR/.apt/usr/lib:${LIBRARY_PATH:-}"
   export INCLUDE_PATH="$BUILD_DIR/.apt/usr/include:$BUILD_DIR/.apt/usr/include/x86_64-linux-gnu:${INCLUDE_PATH:-}"
   export CPATH="$INCLUDE_PATH"
@@ -60,4 +62,17 @@ apt_install() {
   # Point pkg-config files at the extraction prefix.
   find "$BUILD_DIR/.apt" -type f -name '*.pc' \
     -exec sed -i "s|^prefix=|prefix=$BUILD_DIR/.apt|" {} + 2>/dev/null || true
+}
+
+# The subfolders of .apt's library folders that hold shared libraries, relative
+# to .apt: some packages put theirs there rather than in the library folder
+# itself (e.g. ffmpeg's libpulsecommon, in x86_64-linux-gnu/pulseaudio), and the
+# dynamic loader only searches the folders LD_LIBRARY_PATH names, not their
+# subfolders, so such a program would fail to start.
+apt_library_subdirs() {
+  [ -d "$BUILD_DIR/.apt/usr/lib" ] || return 0
+  (cd "$BUILD_DIR/.apt" &&
+    find usr/lib -mindepth 2 \( -type f -o -type l \) -name 'lib*.so*' -printf '%h\n' |
+    grep -v -x -e usr/lib/x86_64-linux-gnu |
+    sort -u)
 }
