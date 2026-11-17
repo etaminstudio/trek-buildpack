@@ -58,6 +58,14 @@ if [ -n "$trek_jemalloc" ] && grep -qs '^libjemalloc2' "$HOME/Aptfile" && [ "${T
 fi
 unset trek_jemalloc trek_jemalloc_path
 EOF
+
+  # The apt library subfolders found at build time (apt_library_subdirs), whose
+  # programs couldn't load their libraries otherwise.
+  local library_subdirs
+  library_subdirs="$(apt_library_subdirs | sed 's|^|$HOME/.apt/|' | paste -sd: -)"
+  if [ -n "$library_subdirs" ]; then
+    echo "export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:$library_subdirs\"" >> "$BUILD_DIR/.profile.d/000_trek_buildpack.sh"
+  fi
 }
 
 # Build-time environment for buildpacks running after this one

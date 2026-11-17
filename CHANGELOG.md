@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Programs installed from the `Aptfile` could fail to start when a library they need sits in a subfolder of the apt library folders, which `LD_LIBRARY_PATH` didn't name: ffmpeg, for one, stopped on `libpulsecommon-17.0.so: cannot open shared object file`, its library being in `x86_64-linux-gnu/pulseaudio`. The subfolders holding shared libraries are now found at build time and added to `LD_LIBRARY_PATH`, at build time and at runtime, after the main library folders.
+
 ## [0.1.4] - 2026-11-06
 
 ### Fixed
